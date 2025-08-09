@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enjoy The Gifts-Store system</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="app-icon.jpg" type="image/jpeg">
+    <style>
+        :root {
+            /* ألوان الوضع النهاري */
+            --primary: #6a5acd;
+            --primary-light: #8a7cff;
+            --secondary: #9370db;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --light-bg: #f8f9ff;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #3498db;
+            --gray: #7f8c8d;
+            --card-bg: #ffffff;
+            --card-shadow: rgba(99, 99, 99, 0.15) 0px 2px 8px 0px;
+            --border: #e0e0e0;
+            --expense: #e74c3c;
+            --expense-light: rgba(231, 76, 60, 0.1);
+            --income: #2ecc71;
+            --income-light: rgba(46, 204, 113, 0.1);
+            /* ألوان الوضع الليلي */
+            --dark-bg: #121212;
+            --dark-card: #1e1e1e;
+            --dark-text: #e0e0e0;
+            --dark-border: #333333;
+        }
+
+        /* شاشة الترحيب والمزامنة */
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            color: white;
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .welcome-logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .store-setup {
+            margin-top: 30px;
+        }
+
+        .store-id-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .store-id-text {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+
+        .store-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .store-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .welcome-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        .welcome-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .welcome-btn.primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary);
+            border-color: transparent;
+        }
+
+        .welcome-btn.primary:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            padding: 10px 15px;
+            border-radius: 25px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            z-index: 100;
+            border: 1px solid var(--border);
+        }
+
+        body.dark-mode .sync-status {
+            background: var(--dark-card);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .sync-indicator.offline {
+            background: var(--danger);
+        }
+
+        .sync-indicator.syncing {
+            background: var(--warning);
+            animation: pulse 1s infinite;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+            transition: background-color 0.4s, color 0.3s, border-color 0.4s;
+        }
+        body {
+            background: var(--light-bg);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        body.dark-mode {
+            background: var(--dark-bg);
+            color: var(--dark-text);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            animation: headerGlow 3s infinite alternate;
+        }
+        @keyframes headerGlow {
+            0% { box-shadow: var(--card-shadow); }
+            100% { box-shadow: 0 0 20px rgba(106, 90, 205, 0.3), var(--card-shadow); }
+        }
+        body.dark-mode header {
+            background: linear-gradient(90deg, #2c2250, #3a2a6c);
+        }
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        header::after {
+            content: "";
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 2;
+            animation: fadeInUp 0.5s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo i {
+            font-size: 2.5rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .logo span {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dark);
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        body.dark-mode .theme-toggle {
+            color: var(--dark-text);
+        }
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(15deg);
+        }
+        .theme-toggle:active {
+            transform: scale(0.9);
+        }
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            z-index: 10;
+        }
+        body.dark-mode .nav-tabs {
+            background: var(--dark-card);
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--gray);
+            border-bottom: 3px solid transparent;
+            font-size: 1.1rem;
+            position: relative;
+        }
+        body.dark-mode .tab {
+            color: var(--dark-text);
+        }
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background: rgba(106, 90, 205, 0.05);
+        }
+        body.dark-mode .tab.active {
+            background: rgba(106, 90, 205, 0.1);
+        }
+        .tab:hover:not(.active) {
+            background: rgba(106, 90, 205, 0.08);
+        }
+        body.dark-mode .tab:hover:not(.active) {
+            background: rgba(106, 90, 205, 0.15);
+        }
+        .tab i {
+            margin-left: 8px;
+        }
+        .tab-content {
+            display: none;
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 25px;
+            animation: fadeIn 0.5s;
+            border: 1px solid rgba(106, 90, 205, 0.1);
+        }
+        body.dark-mode .tab-content {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-title {
+            font-size: 1.8rem;
+            margin: 0 0 25px;
+            color: var(--primary);
+            position: relative;
+            padding-bottom: 15px;
+            font-weight: 700;
+        }
+        body.dark-mode .section-title {
+            color: var(--primary-light);
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+        body.dark-mode .form-label {
+            color: var(--dark-text);
+        }
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        body.dark-mode .form-control {
+            background: #2a2a2a;
+            border: 2px solid var(--dark-border);
+            color: var(--dark-text);
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.2);
+        }
+        body.dark-mode .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.4);
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5949b8;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.3);
+        }
+        body.dark-mode .btn-primary:hover {
+            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.5);
+        }
+        .btn-sm {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            color: var(--dark);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            border: 1px solid var(--border);
+        }
+        body.dark-mode .toast {
+            background: var(--dark-card);
+            color: var(--dark-text);
+            border-color: var(--dark-border);
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+        .toast.info {
+            border-left: 4px solid var(--info);
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            header {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+            .logo span {
+                font-size: 1rem;
+            }
+            .nav-tabs {
+                flex-direction: column;
+            }
+            .tab {
+                padding: 15px;
+                font-size: 1rem;
+            }
+            .tab-content {
+                padding: 20px;
+            }
+            .welcome-content {
+                padding: 20px;
+                margin: 20px;
+            }
+            .welcome-title {
+                font-size: 2rem;
+            }
+            .welcome-logo {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- شاشة الترحيب والمزامنة -->
+    <div id="welcomeScreen" class="welcome-screen">
+        <div class="welcome-content">
+            <div class="welcome-logo">
+                <i class="fas fa-gift"></i>
+            </div>
+            <h1 class="welcome-title">Enjoy The Gifts</h1>
+            <p class="welcome-subtitle">نظام إدارة المتاجر المتطور</p>
+            
+            <div id="storeSetup" class="store-setup">
+                <div id="newStoreSection">
+                    <p>مرحباً بك! هل تريد إنشاء متجر جديد أم ربط متجر موجود؟</p>
+                    <button class="welcome-btn primary" onclick="createNewStore()">
+                        <i class="fas fa-plus"></i>
+                        إنشاء متجر جديد
+                    </button>
+                    <button class="welcome-btn" onclick="showConnectStore()">
+                        <i class="fas fa-link"></i>
+                        لدي معرّف متجر بالفعل
+                    </button>
+                </div>
+                
+                <div id="storeIdDisplay" class="hidden">
+                    <div class="store-id-display">
+                        <p><strong>معرّف متجرك الجديد:</strong></p>
+                        <div id="storeIdText" class="store-id-text"></div>
+                        <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 10px;">
+                            احتفظ بهذا المعرّف لربط أجهزتك الأخرى
+                        </p>
+                    </div>
+                    <button class="welcome-btn primary" onclick="continueToApp()">
+                        <i class="fas fa-arrow-right"></i>
+                        متابعة إلى التطبيق
+                    </button>
+                </div>
+                
+                <div id="connectStoreSection" class="hidden">
+                    <p>أدخل معرّف المتجر الخاص بك:</p>
+                    <input type="text" id="storeIdInput" class="store-input" placeholder="store_xxxxx_xxxxxxxxx">
+                    <br>
+                    <button class="welcome-btn primary" onclick="connectToStore()">
+                        <i class="fas fa-link"></i>
+                        ربط المتجر
+                    </button>
+                    <button class="welcome-btn" onclick="showNewStore()">
+                        <i class="fas fa-arrow-right"></i>
+                        رجوع
+                    </button>
+                </div>
+                
+                <div id="loadingSection" class="hidden">
+                    <p>جاري التحميل والمزامنة...</p>
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مؤشر حالة المزامنة -->
+    <div id="syncStatus" class="sync-status hidden">
+        <div id="syncIndicator" class="sync-indicator"></div>
+        <span id="syncText">متصل</span>
+    </div>
+
+    <!-- التطبيق الرئيسي -->
+    <div id="mainApp" class="hidden">
+        <div class="container">
+            <header>
+                <button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <div class="logo">
+                    <i class="fas fa-gift"></i>
+                    <div>
+                        <h1>Enjoy The Gifts</h1>
+                        <span>نظام إدارة المتاجر المتطور</span>
+                    </div>
+                </div>
+            </header>
+
+            <nav class="nav-tabs">
+                <div class="tab active" onclick="showTab('sales')">
+                    <i class="fas fa-shopping-cart"></i>
+                    المبيعات
+                </div>
+                <div class="tab" onclick="showTab('invoices')">
+                    <i class="fas fa-file-invoice"></i>
+                    الفواتير
+                </div>
+                <div class="tab" onclick="showTab('products')">
+                    <i class="fas fa-box"></i>
+                    المنتجات
+                </div>
+                <div class="tab" onclick="showTab('reports')">
+                    <i class="fas fa-chart-bar"></i>
+                    التقارير
+                </div>
+                <div class="tab" onclick="showTab('settings')">
+                    <i class="fas fa-cog"></i>
+                    الإعدادات
+                </div>
+            </nav>
+
+            <!-- محتوى التبويبات -->
+            <div id="sales" class="tab-content active">
+                <h2 class="section-title">نقطة البيع</h2>
+                <p>محتوى نقطة البيع سيتم إضافته هنا...</p>
+            </div>
+
+            <div id="invoices" class="tab-content">
+                <h2 class="section-title">إدارة الفواتير</h2>
+                <p>محتوى إدارة الفواتير سيتم إضافته هنا...</p>
+            </div>
+
+            <div id="products" class="tab-content">
+                <h2 class="section-title">إدارة المنتجات</h2>
+                <p>محتوى إدارة المنتجات سيتم إضافته هنا...</p>
+            </div>
+
+            <div id="reports" class="tab-content">
+                <h2 class="section-title">التقارير والإحصائيات</h2>
+                <p>محتوى التقارير سيتم إضافته هنا...</p>
+            </div>
+
+            <div id="settings" class="tab-content">
+                <h2 class="section-title">الإعدادات</h2>
+                <div class="form-group">
+                    <label class="form-label">معرّف المتجر الحالي:</label>
+                    <input type="text" id="currentStoreId" class="form-control" readonly>
+                </div>
+                <button class="btn btn-info" onclick="showStoreStats()">
+                    <i class="fas fa-chart-line"></i>
+                    عرض إحصائيات المتجر
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- تحميل database.js -->
+    <script src="database.js"></script>
+    
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+
+    <script>
+        // متغيرات عامة
+        let currentTheme = 'light';
+        let currentTab = 'sales';
+
+        // تهيئة التطبيق
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializeApp();
+        });
+
+        // تهيئة التطبيق
+        async function initializeApp() {
+            try {
+                console.log('Initializing app...');
+                
+                // التأكد من وجود invoiceDB
+                if (typeof window.invoiceDB === 'undefined') {
+                    throw new Error('invoiceDB is not defined');
+                }
+                
+                // تهيئة قاعدة البيانات
+                await window.invoiceDB.init();
+                console.log('Database initialized');
+                
+                // فحص حالة المتجر
+                const syncStatus = window.invoiceDB.getSyncStatus();
+                console.log('Sync status:', syncStatus);
+                
+                if (!syncStatus.hasStoreId) {
+                    // عرض شاشة الترحيب
+                    showWelcomeScreen();
+                } else {
+                    // إخفاء شاشة الترحيب وعرض التطبيق
+                    hideWelcomeScreen();
+                    await loadAppData();
+                }
+                
+                // تحديث مؤشر المزامنة
+                updateSyncStatus();
+                
+                // مراقبة حالة الاتصال
+                window.addEventListener('online', updateSyncStatus);
+                window.addEventListener('offline', updateSyncStatus);
+                
+            } catch (error) {
+                console.error('خطأ في تهيئة التطبيق:', error);
+                showToast('خطأ في تهيئة التطبيق: ' + error.message, 'error');
+            }
+        }
+
+        // عرض شاشة الترحيب
+        function showWelcomeScreen() {
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('syncStatus').classList.add('hidden');
+        }
+
+        // إخفاء شاشة الترحيب
+        function hideWelcomeScreen() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('syncStatus').classList.remove('hidden');
+        }
+
+        // إنشاء متجر جديد
+        async function createNewStore() {
+            showLoading();
+            
+            try {
+                console.log('Creating new store...');
+                const storeId = await window.invoiceDB.createNewStore();
+                console.log('Store created:', storeId);
+                
+                document.getElementById('newStoreSection').classList.add('hidden');
+                document.getElementById('storeIdDisplay').classList.remove('hidden');
+                document.getElementById('storeIdText').textContent = storeId;
+                
+                hideLoading();
+                showToast('تم إنشاء المتجر بنجاح!', 'success');
+                
+            } catch (error) {
+                console.error('خطأ في إنشاء المتجر:', error);
+                hideLoading();
+                showToast('خطأ في إنشاء المتجر: ' + error.message, 'error');
+            }
+        }
+
+        // عرض قسم ربط المتجر
+        function showConnectStore() {
+            document.getElementById('newStoreSection').classList.add('hidden');
+            document.getElementById('connectStoreSection').classList.remove('hidden');
+        }
+
+        // عرض قسم المتجر الجديد
+        function showNewStore() {
+            document.getElementById('connectStoreSection').classList.add('hidden');
+            document.getElementById('newStoreSection').classList.remove('hidden');
+        }
+
+        // ربط متجر موجود
+        async function connectToStore() {
+            const storeId = document.getElementById('storeIdInput').value.trim();
+            
+            if (!storeId) {
+                showToast('يرجى إدخال معرّف المتجر', 'warning');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                await window.invoiceDB.connectToStore(storeId);
+                hideLoading();
+                continueToApp();
+                showToast('تم ربط المتجر بنجاح!', 'success');
+                
+            } catch (error) {
+                console.error('خطأ في ربط المتجر:', error);
+                hideLoading();
+                showToast('خطأ في ربط المتجر: ' + error.message, 'error');
+            }
+        }
+
+        // المتابعة إلى التطبيق
+        async function continueToApp() {
+            hideWelcomeScreen();
+            await loadAppData();
+        }
+
+        // عرض شاشة التحميل
+        function showLoading() {
+            document.getElementById('newStoreSection').classList.add('hidden');
+            document.getElementById('connectStoreSection').classList.add('hidden');
+            document.getElementById('storeIdDisplay').classList.add('hidden');
+            document.getElementById('loadingSection').classList.remove('hidden');
+        }
+
+        // إخفاء شاشة التحميل
+        function hideLoading() {
+            document.getElementById('loadingSection').classList.add('hidden');
+        }
+
+        // تحديث مؤشر المزامنة
+        function updateSyncStatus() {
+            if (!window.invoiceDB) return;
+            
+            const syncStatus = window.invoiceDB.getSyncStatus();
+            const indicator = document.getElementById('syncIndicator');
+            const text = document.getElementById('syncText');
+            
+            if (syncStatus.isOnline && syncStatus.firebaseInitialized) {
+                indicator.className = 'sync-indicator';
+                text.textContent = 'متصل';
+            } else if (syncStatus.isOnline && !syncStatus.firebaseInitialized) {
+                indicator.className = 'sync-indicator syncing';
+                text.textContent = 'يتم الاتصال...';
+            } else {
+                indicator.className = 'sync-indicator offline';
+                text.textContent = 'غير متصل';
+            }
+        }
+
+        // تحميل بيانات التطبيق
+        async function loadAppData() {
+            try {
+                // تحديث معرف المتجر في الإعدادات
+                const syncStatus = window.invoiceDB.getSyncStatus();
+                if (syncStatus.storeId) {
+                    document.getElementById('currentStoreId').value = syncStatus.storeId;
+                }
+                
+                // مزامنة التغييرات المعلقة
+                if (navigator.onLine) {
+                    await window.invoiceDB.syncPendingChanges();
+                }
+                
+                console.log('App data loaded successfully');
+                
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                showToast('خطأ في تحميل البيانات: ' + error.message, 'error');
+            }
+        }
+
+        // عرض إحصائيات المتجر
+        async function showStoreStats() {
+            try {
+                const stats = await window.invoiceDB.getStatistics();
+                
+                let message = `إحصائيات المتجر:\n`;
+                message += `معرف المتجر: ${stats.storeId}\n`;
+                message += `حالة الاتصال: ${stats.isOnline ? 'متصل' : 'غير متصل'}\n`;
+                message += `Firebase: ${stats.firebaseInitialized ? 'متصل' : 'غير متصل'}\n`;
+                message += `عدد الفواتير: ${stats.totalInvoices}\n`;
+                message += `عدد المنتجات: ${stats.totalProducts}\n`;
+                message += `التغييرات المعلقة: ${stats.pendingChanges}`;
+                
+                alert(message);
+                
+            } catch (error) {
+                console.error('خطأ في عرض الإحصائيات:', error);
+                showToast('خطأ في عرض الإحصائيات: ' + error.message, 'error');
+            }
+        }
+
+        // تبديل الوضع الليلي/النهاري
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.classList.toggle('dark-mode');
+            
+            const themeIcon = document.getElementById('themeIcon');
+            if (currentTheme === 'dark') {
+                themeIcon.className = 'fas fa-sun';
+            } else {
+                themeIcon.className = 'fas fa-moon';
+            }
+            
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        // تبديل التبويبات
+        function showTab(tabName) {
+            // إخفاء جميع التبويبات
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // عرض التبويب المحدد
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            currentTab = tabName;
+        }
+
+        // عرض رسالة منبثقة
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // تحميل الوضع المحفوظ
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                toggleTheme();
+            }
+        });
+        
+    </script>
+</body>
+</html>
+
